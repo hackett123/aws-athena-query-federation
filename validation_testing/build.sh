@@ -3,5 +3,5 @@ SCRIPT_PATH=$(dirname $(readlink -f $0))
 
 cd $SCRIPT_PATH
 
-docker image build -t federation-cdk-dev .
+docker image build -t federation-validation-testing .
 

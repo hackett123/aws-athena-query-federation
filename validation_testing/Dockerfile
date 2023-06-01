@@ -1,6 +1,8 @@
 FROM ubuntu
 
-RUN apt update -y && apt install -y tar gzip unzip wget less groff vim git python3 python3-pip unixodbc-dev curl
+RUN apt update -y && apt install -y tar gzip unzip wget less groff vim git python3 python3-pip unixodbc-dev curl jq
+
+RUN pip3 install boto3
 
 RUN curl -sL https://deb.nodesource.com/setup_18.x | bash -
 RUN apt install -y aptitude # needed to resolve version conflicts from changing the source for node above

@@ -13,42 +13,23 @@
 CONNECTOR_NAME=$1
 RESULTS_LOCATION=$2
 VALIDATION_TESTING_ROOT=$REPOSITORY_ROOT/validation_testing
-mkdir -p ~/docker_images/
-curl -s https://raw.githubusercontent.com/henrymai/container_env/master/env.sh | sed '/--gpus/d' > ~/docker_images/gh_env.sh
-chmod 0755 ~/docker_images/gh_env.sh;
-
-# make current environment variables sourceable for container env
-cat <<EOF > $VALIDATION_TESTING_ROOT/env_vars.sh
-export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
-export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
-export AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN
-export AWS_DEFAULT_REGION=us-east-1
-export REPOSITORY_ROOT=$REPOSITORY_ROOT
-export CONNECTOR_NAME=$CONNECTOR_NAME
-export DATABASE_PASSWORD=$DATABASE_PASSWORD
-EOF
-# source the file to make sure we have the region set
-source $VALIDATION_TESTING_ROOT/env_vars.sh
-
 
 # upload connector jar to s3 and update yaml to s3 uri
 aws s3 cp $REPOSITORY_ROOT/athena-$CONNECTOR_NAME/target/athena-$CONNECTOR_NAME-2022.47.1.jar s3://athena-federation-validation-testing-jars
 sed -i "s#CodeUri: \"./target/athena-$CONNECTOR_NAME-2022.47.1.jar\"#CodeUri: \"s3://athena-federation-validation-testing-jars/athena-$CONNECTOR_NAME-2022.47.1.jar\"#" $REPOSITORY_ROOT/athena-$CONNECTOR_NAME/athena-$CONNECTOR_NAME.yaml
 
 # then we can deploy the stack - start our node/cdk docker container, build, deploy
-sh $(dirname $(find . -name ATHENA_INFRA_SPINUP_ROOT))/docker_image/build.sh
-IMAGE=federation-cdk-dev ~/docker_images/gh_env.sh '\
-  source env_vars.sh;
-  cd $(dirname $(find . -name ATHENA_INFRA_SPINUP_ROOT))/app;
-  echo "DATABASE_PASSWORD=$DATABASE_PASSWORD" > .env
-  npm install;
-  npm run build;
-  npm run cdk synth;
-  npm run cdk deploy ${CONNECTOR_NAME}CdkStack;
-'
+cd $(dirname $(find . -name ATHENA_INFRA_SPINUP_ROOT))/app;
+echo "DATABASE_PASSWORD=$DATABASE_PASSWORD" > .env
+npm install;
+npm run build;
+npm run cdk synth;
+npm run cdk deploy ${CONNECTOR_NAME}CdkStack;
 
 echo "FINISHED DEPLOYING INFRA FOR ${CONNECTOR_NAME}."
 
+# cd back to validation root
+cd $VALIDATION_TESTING_ROOT
 
 # now we run the glue jobs that the CDK stack created
 # If there is any output to glue_job_synchronous_execution.py, we will exit this script with a failure code.
