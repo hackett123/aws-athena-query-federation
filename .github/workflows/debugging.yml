@@ -1,0 +1,47 @@
+name: debugging
+
+on:
+  workflow_dispatch:
+
+
+env:
+  # env vars that are secrets should always be set in the env field, so they aren't visible in $GITHUB_ENV file
+  AWS_DEFAULT_REGION: 'us-east-1'
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+  RESULTS_LOCATION: ${{ secrets.RESULTS_LOCATION }}
+  DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+
+jobs:
+  debugging:
+    name: run release tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup dependencies
+        run: |
+          sudo apt-get install -y libxml2-utils python3
+          pip3 install lxml beautifulsoup4 boto3
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'corretto'
+          java-version: '11'
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Set dynamic env vars
+        run: |
+          echo "REPOSITORY_ROOT=$GITHUB_WORKSPACE" >> $GITHUB_ENV
+          echo "VALIDATION_TESTING_ROOT=$GITHUB_WORKSPACE/validation_testing" >> $GITHUB_ENV # apparently vars set in the same run aren't accessible, so that's why we specify github_workspace again
+      
+      - name: figure out whatever isn't working here
+        run: |
+          echo "GITHUB WORKSPACE IS $GITHUB_WORKSPACE"
+          echo "lowercase github workspace is $github_workspace"
+          echo "REPOSITORY ROOT IS $REPOSITORY_ROOT"
+          echo "VALIDATION TESTING ROOT IS $VALIDATION_TESTING_ROOT"
+          cd $VALIDATION_TESTING_ROOT
+          echo "CURR DIR IS `pwd`"
+
