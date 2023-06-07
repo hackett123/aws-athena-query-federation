@@ -37,7 +37,7 @@ jobs:
       - name: Run tests
         run: |
             cd $GITHUB_WORKSPACE/validation_testing;
-            python3 main.py;
+            exit 1;
         env:
           # env vars that are secrets should always be set in the env field, so they aren't visible in $GITHUB_ENV file
           AWS_DEFAULT_REGION: 'us-east-1'
